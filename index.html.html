@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>UK Cities Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    .map-container {
+      height: calc(100vh - 50px);
+      position: relative;
+    }
+
+    .leaflet-control-container .leaflet-top.leaflet-left {
+      flex-direction: column;
+    }
+
+    .leaflet-control-container .leaflet-top.leaflet-left .leaflet-control {
+      margin-bottom: 10px;
+    }
+
+    .leaflet-control-geocoder.leaflet-control {
+      background-color: gray;
+      top: auto;
+      bottom: 10px;
+      left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map" class="map-container"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script>
+    // Create the map and set the initial view
+    var map = L.map('map').setView([54.5, -3], 6);
+
+    // Create a tile layer for the street map background
+    var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+
+    // Create a tile layer for satellite imagery
+    var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; Google'
+    });
+
+    // Define an array of cities with their coordinates and popup content
+    var cities = [
+      {
+        name: "London",
+        coordinates: [51.5074, -0.1278],
+        popupContent: "<h2>London</h2><p>The capital city of the United Kingdom.</p>"
+      },
+      {
+        name: "Manchester",
+        coordinates: [53.483959, -2.244644],
+        popupContent: "<h2>Manchester</h2><p>A major city in the northwest of England.</p>"
+      },
+      {
+        name: "Birmingham",
+        coordinates: [52.4862, -1.8904],
+        popupContent: "<h2>Birmingham</h2><p>A city in the West Midlands region of England.</p>"
+      },
+      {
+        name: "Glasgow",
+        coordinates: [55.8642, -4.2518],
+        popupContent: "<h2>Glasgow</h2><p>The largest city in Scotland.</p>"
+      },
+      {
+        name: "Bristol",
+        coordinates: [51.4545, -2.5879],
+        popupContent: "<h2>Bristol</h2><p>A city and county in southwest England.</p>"
+      },
+      {
+        name: "Edinburgh",
+        coordinates: [55.9533, -3.1883],
+        popupContent: "<h2>Edinburgh</h2><p>The capital city of Scotland.</p>"
+      },
+      {
+        name: "Leeds",
+        coordinates: [53.8008, -1.5491],
+        popupContent: "<h2>Leeds</h2><p>A city in West Yorkshire, England.</p>"
+      },
+      {
+        name: "Liverpool",
+        coordinates: [53.4084, -2.9916],
+        popupContent: "<h2>Liverpool</h2><p>A city in Merseyside, England.</p>"
+      },
+      {
+        name: "Newcastle",
+        coordinates: [54.9783, -1.6178],
+        popupContent: "<h2>Newcastle</h2><p>A city and metropolitan borough in Tyne and Wear, England.</p>"
+      },
+      {
+        name: "Sheffield",
+        coordinates: [53.3811, -1.4701],
+        popupContent: "<h2>Sheffield</h2><p>A city and metropolitan borough in South Yorkshire, England.</p>"
+      },
+      {
+        name: "Cardiff",
+        coordinates: [51.4816, -3.1791],
+        popupContent: "<h2>Cardiff</h2><p>The capital city of Wales.</p>"
+      },
+      {
+        name: "Belfast",
+        coordinates: [54.5970, -5.9300],
+        popupContent: "<h2>Belfast</h2><p>The capital and largest city of Northern Ireland.</p>"
+      },
+      {
+        name: "Nottingham",
+        coordinates: [52.9548, -1.1581],
+        popupContent: "<h2>Nottingham</h2><p>A city and unitary authority area in Nottinghamshire, England.</p>"
+      }
+    ];
+
+    // Create markers and bind popups for each city
+    cities.forEach(function(city) {
+      var marker = L.marker(city.coordinates).addTo(map).bindPopup(city.popupContent);
+      marker.on('click', function() {
+        marker.openPopup();
+      });
+    });
+
+    // Create Pan Control
+    var panControl = L.control({position: 'bottomright'});
+    panControl.onAdd = function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar leaflet-control-custom');
+      container.innerHTML = '<a href="#" title="Pan" role="button"><img src="pan.png" alt="Pan"></a>';
+      container.onclick = function() {
+        // Perform pan action
+        map.panBy([100, 100]); // Example: Pan by 100 pixels
+        return false;
+      };
+      return container;
+    };
+    panControl.addTo(map);
+
+    // Create Zoom Control
+    var zoomControl = L.control({position: 'bottomright'});
+    zoomControl.onAdd = function(map) {
+      var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar leaflet-control-custom');
+      container.innerHTML = '<a href="#" title="Zoom" role="button"><img src="zoom.png" alt="Zoom"></a>';
+      container.onclick = function() {
+        // Perform zoom action
+        map.zoomIn(); // Example: Zoom In
+        return false;
+      };
+      return container;
+    };
+    zoomControl.addTo(map);
+
+    // Create base layers for the map
+    var baseLayers = {
+      "Street View": streetLayer,
+      "Satellite View": satelliteLayer
+    };
+
+    // Add the base layers to the map
+    L.control.layers(baseLayers).addTo(map);
+
+    // Set the default base layer
+    streetLayer.addTo(map);
+
+    // Add geocoder control for search functionality
+    var geocoder = L.Control.geocoder({
+      geocoder: L.Control.Geocoder.nominatim(),
+      position: 'topleft',
+      placeholder: 'Search Any City Name' // Updated placeholder text
+    })
+      .on('markgeocode', function(event) {
+        var result = event.geocode;
+        map.fitBounds(result.bbox);
+      })
+      .on('geocodeselect', function(event) {
+        var result = event.geocode;
+        var selectedCity = cities.find(function(city) {
+          return city.name.toLowerCase() === result.name.toLowerCase();
+        });
+        if (selectedCity) {
+          var marker = L.marker(selectedCity.coordinates).addTo(map);
+          marker.bindPopup(selectedCity.popupContent).openPopup();
+        }
+      })
+      .addTo(map);
+  </script>
+</body>
+</html>
